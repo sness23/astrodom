@@ -115,7 +115,7 @@ class AntikytherAstrolabe {
             }
         };
 
-        this.showConstellations = false;
+        this.showConstellations = true;
         this.constellationMeshes = [];
 
         this.init();
@@ -157,6 +157,9 @@ class AntikytherAstrolabe {
 
         // Add particle system for mystical effect
         this.createMysticalParticles();
+
+        // Create constellations by default
+        this.createConstellations();
     }
 
     createAncientLighting() {
