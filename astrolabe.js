@@ -493,16 +493,26 @@ class AntikytherAstrolabe {
     }
 
     setupControls() {
+        // Modal elements
+        const modal = document.getElementById('birthDataModal');
         const birthDateInput = document.getElementById('birthDate');
         const birthTimeInput = document.getElementById('birthTime');
         const latitudeInput = document.getElementById('latitude');
         const longitudeInput = document.getElementById('longitude');
         const calculateButton = document.getElementById('calculateChart');
+        const useDefaultsButton = document.getElementById('useDefaults');
+        const reopenModalButton = document.getElementById('reopenModal');
+
+        // Control elements
         const resetButton = document.getElementById('resetToNow');
         const playPauseButton = document.getElementById('playPause');
         const speedSlider = document.getElementById('speedSlider');
         const speedDisplay = document.getElementById('speedDisplay');
 
+        // Show modal on startup
+        this.showModal();
+
+        // Modal controls
         calculateButton.addEventListener('click', () => {
             const dateStr = birthDateInput.value;
             const timeStr = birthTimeInput.value;
@@ -510,8 +520,20 @@ class AntikytherAstrolabe {
             this.birthCoords.lat = parseFloat(latitudeInput.value);
             this.birthCoords.lon = parseFloat(longitudeInput.value);
             this.calculateNatalChart();
+            this.hideModal();
         });
 
+        useDefaultsButton.addEventListener('click', () => {
+            // Use your demo data
+            this.calculateNatalChart();
+            this.hideModal();
+        });
+
+        reopenModalButton.addEventListener('click', () => {
+            this.showModal();
+        });
+
+        // Time controls
         resetButton.addEventListener('click', () => {
             this.currentDate = new Date();
             this.updatePlanetPositions(this.currentDate);
@@ -529,6 +551,16 @@ class AntikytherAstrolabe {
 
         // Start animation
         this.startAnimation();
+    }
+
+    showModal() {
+        const modal = document.getElementById('birthDataModal');
+        modal.classList.remove('hidden');
+    }
+
+    hideModal() {
+        const modal = document.getElementById('birthDataModal');
+        modal.classList.add('hidden');
     }
 
     startAnimation() {

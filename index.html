@@ -20,16 +20,47 @@
             touch-action: none;
         }
 
-        .controls {
+        .birth-data-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .birth-data-modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(20, 15, 10, 0.95), rgba(40, 30, 20, 0.95));
+            border: 3px solid #b8860b;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .time-controls {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 100;
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid #b8860b;
             border-radius: 10px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .control-group {
@@ -64,15 +95,19 @@
             box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
         }
 
-        .time-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
+        #speedSlider {
+            width: 120px;
         }
 
-        #speedSlider {
-            width: 150px;
+        .modal-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            margin: 0 10px;
+            padding: 12px 20px;
+            font-size: 16px;
         }
 
         .info-panel {
@@ -104,40 +139,46 @@
 <body>
     <canvas id="renderCanvas"></canvas>
 
-    <div class="controls">
-        <div class="title">⚡ Antikythera Astrolabe ⚡</div>
+    <!-- Birth Data Modal -->
+    <div id="birthDataModal" class="birth-data-modal">
+        <div class="modal-content">
+            <div class="title">⚡ Enter Your Birth Information ⚡</div>
 
-        <div class="control-group">
-            <label>Birth Date:</label>
-            <input type="date" id="birthDate" value="1972-01-25">
-        </div>
+            <div class="control-group">
+                <label>Birth Date:</label>
+                <input type="date" id="birthDate" value="1972-01-25">
+            </div>
 
-        <div class="control-group">
-            <label>Birth Time:</label>
-            <input type="time" id="birthTime" value="07:32">
-        </div>
+            <div class="control-group">
+                <label>Birth Time:</label>
+                <input type="time" id="birthTime" value="07:32">
+            </div>
 
-        <div class="control-group">
-            <label>Latitude:</label>
-            <input type="number" id="latitude" value="53.5461" step="0.0001" placeholder="Edmonton: 53.5461">
-        </div>
+            <div class="control-group">
+                <label>Latitude:</label>
+                <input type="number" id="latitude" value="53.5461" step="0.0001" placeholder="Edmonton: 53.5461">
+            </div>
 
-        <div class="control-group">
-            <label>Longitude:</label>
-            <input type="number" id="longitude" value="-113.4938" step="0.0001" placeholder="Edmonton: -113.4938">
-        </div>
+            <div class="control-group">
+                <label>Longitude:</label>
+                <input type="number" id="longitude" value="-113.4938" step="0.0001" placeholder="Edmonton: -113.4938">
+            </div>
 
-        <div class="control-group">
-            <button id="calculateChart">Calculate Natal Chart</button>
-            <button id="resetToNow">Jump to Present</button>
+            <div class="modal-buttons">
+                <button id="calculateChart">✨ Create My Astrolabe</button>
+                <button id="useDefaults">Use Demo Data</button>
+            </div>
         </div>
+    </div>
 
-        <div class="time-controls">
-            <button id="playPause">▶ Play</button>
-            <label>Speed:</label>
-            <input type="range" id="speedSlider" min="0.1" max="10" value="1" step="0.1">
-            <span id="speedDisplay">1x</span>
-        </div>
+    <!-- Time Controls -->
+    <div class="time-controls">
+        <button id="playPause">▶ Play</button>
+        <button id="resetToNow">🏠 Present</button>
+        <button id="reopenModal">⚙️ Settings</button>
+        <label>Speed:</label>
+        <input type="range" id="speedSlider" min="0.1" max="10" value="1" step="0.1">
+        <span id="speedDisplay">1x</span>
     </div>
 
     <div class="info-panel">
