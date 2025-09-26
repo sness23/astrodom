@@ -13,6 +13,9 @@ class AntikytherAstrolabe {
         this.currentDate = new Date();
         this.birthDate = new Date('1972-01-25T07:32:00');
         this.birthCoords = { lat: 53.5461, lon: -113.4938 };
+        this.showLabels = false;
+        this.planetLabels = [];
+        this.zodiacLabels = [];
 
         this.planetColors = {
             Sun: new BABYLON.Color3(1, 0.8, 0.2),
@@ -410,6 +413,7 @@ class AntikytherAstrolabe {
         });
 
         this.updateAspectLines();
+        this.updateLabels();
         this.updateInfoPanel(date, positions);
     }
 
@@ -466,6 +470,147 @@ class AntikytherAstrolabe {
         this.aspectLines.push(line);
     }
 
+    createPlanetLabels() {
+        if (!this.showLabels) return;
+
+        // Clear existing labels
+        this.planetLabels.forEach(label => label.dispose());
+        this.planetLabels = [];
+
+        const planetNames = Object.keys(this.planets);
+
+        planetNames.forEach(planetName => {
+            const planet = this.planets[planetName];
+            const position = planet.mesh.position;
+
+            // Create a plane for the text - much larger
+            const plane = BABYLON.MeshBuilder.CreatePlane(`${planetName}Label`, {size: 2.5}, this.scene);
+
+            // Position the label slightly offset from the planet
+            plane.position = position.clone();
+            plane.position.y += 0.8;
+            plane.position.x += 0.6;
+
+            // Make it face the camera properly with manual rotation
+            plane.billboardMode = BABYLON.Mesh.BILLBOARD_MODE_ALL;
+            plane.rotation.x = Math.PI / 2;
+            plane.rotation.y = Math.PI / 2;
+            plane.rotation.z = Math.PI;
+
+            // Create dynamic texture for text - larger resolution and text
+            const texture = new BABYLON.DynamicTexture(`${planetName}LabelTexture`, {width: 512, height: 128}, this.scene);
+            texture.hasAlpha = true;
+
+            const context = texture.getContext();
+            context.clearRect(0, 0, 512, 128);
+            context.fillStyle = this.planetColors[planetName].toHexString();
+            context.font = 'bold 48px Arial';
+            context.textAlign = 'center';
+            context.strokeStyle = '#000000';
+            context.lineWidth = 4;
+            context.strokeText(planetName, 256, 80);
+            context.fillText(planetName, 256, 80);
+            texture.update();
+
+            // Create material
+            const material = new BABYLON.StandardMaterial(`${planetName}LabelMat`, this.scene);
+            material.diffuseTexture = texture;
+            material.emissiveTexture = texture;
+            material.opacityTexture = texture;
+            material.disableLighting = true;
+
+            plane.material = material;
+            this.planetLabels.push(plane);
+        });
+    }
+
+    createZodiacLabels() {
+        if (!this.showLabels) return;
+
+        // Clear existing zodiac labels
+        this.zodiacLabels.forEach(label => label.dispose());
+        this.zodiacLabels = [];
+
+        for (let i = 0; i < 12; i++) {
+            const angle = (i * 30) * Math.PI / 180;
+            const signName = this.zodiacSigns[i];
+
+            // Create a plane for the text - much larger
+            const plane = BABYLON.MeshBuilder.CreatePlane(`${signName}Label`, {size: 2}, this.scene);
+
+            // Position the label on the outer ring
+            plane.position.x = Math.cos(angle) * 7.5;
+            plane.position.z = Math.sin(angle) * 7.5;
+            plane.position.y = 0.4;
+
+            // Make it face the camera properly with manual rotation
+            plane.billboardMode = BABYLON.Mesh.BILLBOARD_MODE_ALL;
+            plane.rotation.x = Math.PI / 2;
+            plane.rotation.y = Math.PI / 2;
+            plane.rotation.z = Math.PI;
+
+            // Create dynamic texture for text - larger resolution and text
+            const texture = new BABYLON.DynamicTexture(`${signName}LabelTexture`, {width: 512, height: 128}, this.scene);
+            texture.hasAlpha = true;
+
+            const context = texture.getContext();
+            context.clearRect(0, 0, 512, 128);
+            context.fillStyle = '#d4af37';
+            context.font = 'bold 40px Times New Roman';
+            context.textAlign = 'center';
+            context.strokeStyle = '#000000';
+            context.lineWidth = 3;
+            context.strokeText(signName, 256, 80);
+            context.fillText(signName, 256, 80);
+            texture.update();
+
+            // Create material
+            const material = new BABYLON.StandardMaterial(`${signName}LabelMat`, this.scene);
+            material.diffuseTexture = texture;
+            material.emissiveTexture = texture;
+            material.opacityTexture = texture;
+            material.disableLighting = true;
+
+            plane.material = material;
+            this.zodiacLabels.push(plane);
+        }
+    }
+
+    toggleLabels() {
+        this.showLabels = !this.showLabels;
+
+        if (this.showLabels) {
+            this.createPlanetLabels();
+            this.createZodiacLabels();
+        } else {
+            // Hide labels
+            this.planetLabels.forEach(label => label.dispose());
+            this.planetLabels = [];
+            this.zodiacLabels.forEach(label => label.dispose());
+            this.zodiacLabels = [];
+        }
+
+        // Update button text
+        const labelsButton = document.getElementById('labelsToggle');
+        labelsButton.textContent = this.showLabels ? '🏷️ Hide Labels' : '🏷️ Labels';
+    }
+
+    updateLabels() {
+        if (!this.showLabels) return;
+
+        // Update planet label positions
+        const planetNames = Object.keys(this.planets);
+        planetNames.forEach((planetName, index) => {
+            if (index < this.planetLabels.length) {
+                const planet = this.planets[planetName];
+                const label = this.planetLabels[index];
+                label.position = planet.mesh.position.clone();
+                label.position.y += 0.8;
+                label.position.x += 0.6;
+            }
+        });
+    }
+
     updateInfoPanel(date, positions) {
         const infoDiv = document.getElementById('planetaryInfo');
         const dateDiv = document.getElementById('currentDate');
@@ -507,6 +652,9 @@ class AntikytherAstrolabe {
         const helpModal = document.getElementById('helpModal');
         const helpButton = document.getElementById('helpButton');
         const closeHelpButton = document.getElementById('closeHelp');
+
+        // Labels toggle
+        const labelsToggle = document.getElementById('labelsToggle');
 
         // Control elements
         const resetButton = document.getElementById('resetToNow');
@@ -552,6 +700,11 @@ class AntikytherAstrolabe {
             if (e.target === helpModal) {
                 this.hideHelpModal();
             }
+        });
+
+        // Labels toggle
+        labelsToggle.addEventListener('click', () => {
+            this.toggleLabels();
         });
 
         // Time controls
