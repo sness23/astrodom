@@ -590,9 +590,9 @@ class AntikytherAstrolabe {
             this.zodiacLabels = [];
         }
 
-        // Update button text
+        // Update button text with consistent length
         const labelsButton = document.getElementById('labelsToggle');
-        labelsButton.textContent = this.showLabels ? '🏷️ Hide Labels' : '🏷️ Labels';
+        labelsButton.textContent = this.showLabels ? '🏷️ Hide' : '🏷️ Show';
     }
 
     updateLabels() {
