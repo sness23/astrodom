@@ -420,18 +420,74 @@ class AntikytherAstrolabe {
                     }
                 });
 
-                // Calculate Ascendant (Rising Sign)
+                // Calculate major astrological points
                 try {
                     const localSiderealTime = this.calculateLocalSiderealTime(date, this.birthCoords.lon);
+
+                    // Ascendant (Rising Sign)
                     const ascendant = this.calculateAscendant(localSiderealTime, this.birthCoords.lat);
                     positions['Ascendant'] = {
                         longitude: ascendant,
                         latitude: 0,
                         distance: 1
                     };
+
+                    // Midheaven (MC) - Career/public image
+                    const midheaven = this.calculateMidheaven(localSiderealTime, this.birthCoords.lat);
+                    positions['Midheaven'] = {
+                        longitude: midheaven,
+                        latitude: 0,
+                        distance: 1
+                    };
+
+                    // Descendant (opposite Ascendant) - Relationships
+                    positions['Descendant'] = {
+                        longitude: (ascendant + 180) % 360,
+                        latitude: 0,
+                        distance: 1
+                    };
+
+                    // IC (Imum Coeli, opposite MC) - Home/family
+                    positions['IC'] = {
+                        longitude: (midheaven + 180) % 360,
+                        latitude: 0,
+                        distance: 1
+                    };
+
+                    // North Node (using approximate calculation)
+                    const northNode = this.calculateNorthNode(date);
+                    positions['North Node'] = {
+                        longitude: northNode,
+                        latitude: 0,
+                        distance: 1
+                    };
+
+                    // South Node (opposite North Node)
+                    positions['South Node'] = {
+                        longitude: (northNode + 180) % 360,
+                        latitude: 0,
+                        distance: 1
+                    };
+
+                    // Part of Fortune (Sun + Moon - Ascendant)
+                    if (positions['Sun'] && positions['Moon']) {
+                        const partOfFortune = (positions['Sun'].longitude + positions['Moon'].longitude - ascendant + 360) % 360;
+                        positions['Part of Fortune'] = {
+                            longitude: partOfFortune,
+                            latitude: 0,
+                            distance: 1
+                        };
+                    }
+
                 } catch (e) {
-                    console.warn('Could not calculate Ascendant:', e);
+                    console.warn('Could not calculate astrological points:', e);
+                    // Add fallback calculations
                     positions['Ascendant'] = this.getFallbackAscendant(date);
+                    positions['Midheaven'] = this.getFallbackMidheaven(date);
+                    positions['Descendant'] = { longitude: (positions['Ascendant'].longitude + 180) % 360, latitude: 0, distance: 1 };
+                    positions['IC'] = { longitude: (positions['Midheaven'].longitude + 180) % 360, latitude: 0, distance: 1 };
+                    positions['North Node'] = this.getFallbackNorthNode(date);
+                    positions['South Node'] = { longitude: (positions['North Node'].longitude + 180) % 360, latitude: 0, distance: 1 };
                 }
 
             } catch (e) {
@@ -457,8 +513,23 @@ class AntikytherAstrolabe {
             positions[planet] = this.getFallbackPosition(planet, date, daysSinceBirth);
         });
 
-        // Add fallback Ascendant
+        // Add fallback astrological points
         positions['Ascendant'] = this.getFallbackAscendant(date);
+        positions['Midheaven'] = this.getFallbackMidheaven(date);
+        positions['Descendant'] = { longitude: (positions['Ascendant'].longitude + 180) % 360, latitude: 0, distance: 1 };
+        positions['IC'] = { longitude: (positions['Midheaven'].longitude + 180) % 360, latitude: 0, distance: 1 };
+        positions['North Node'] = this.getFallbackNorthNode(date);
+        positions['South Node'] = { longitude: (positions['North Node'].longitude + 180) % 360, latitude: 0, distance: 1 };
+
+        // Part of Fortune (Sun + Moon - Ascendant)
+        if (positions['Sun'] && positions['Moon']) {
+            const partOfFortune = (positions['Sun'].longitude + positions['Moon'].longitude - positions['Ascendant'].longitude + 360) % 360;
+            positions['Part of Fortune'] = {
+                longitude: partOfFortune,
+                latitude: 0,
+                distance: 1
+            };
+        }
 
         return positions;
     }
@@ -547,12 +618,58 @@ class AntikytherAstrolabe {
         return ascendantDegrees;
     }
 
+    calculateMidheaven(localSiderealTime, latitude) {
+        // Midheaven is the Local Sidereal Time converted to longitude
+        const mc = localSiderealTime * 15; // Convert hours to degrees
+        return mc % 360;
+    }
+
+    calculateNorthNode(date) {
+        // Approximate North Node calculation (Moon's nodes have 18.6 year cycle)
+        const j2000 = new Date('2000-01-01T12:00:00Z');
+        const daysSinceJ2000 = (date.getTime() - j2000.getTime()) / (1000 * 60 * 60 * 24);
+
+        // North Node position on J2000 was approximately at 96.5 degrees (Cancer)
+        const basePosition = 96.5;
+
+        // Node moves backwards about 19.35 degrees per year
+        const nodeMovement = daysSinceJ2000 * (-19.35 / 365.25);
+
+        let northNode = basePosition + nodeMovement;
+        while (northNode < 0) northNode += 360;
+        while (northNode >= 360) northNode -= 360;
+
+        return northNode;
+    }
+
     getFallbackAscendant(date) {
         // Simple fallback based on time of day
         const hours = date.getHours();
         const ascendant = (hours * 15) % 360; // Rough approximation
         return {
             longitude: ascendant,
+            latitude: 0,
+            distance: 1
+        };
+    }
+
+    getFallbackMidheaven(date) {
+        // Simple fallback - MC roughly corresponds to solar time + 6 hours
+        const hours = (date.getHours() + 6) % 24;
+        const mc = (hours * 15) % 360;
+        return {
+            longitude: mc,
+            latitude: 0,
+            distance: 1
+        };
+    }
+
+    getFallbackNorthNode(date) {
+        // Simple fallback North Node calculation
+        const daysSinceEpoch = (date.getTime() - new Date('2000-01-01').getTime()) / (1000 * 60 * 60 * 24);
+        const northNode = (125 - daysSinceEpoch * 0.053) % 360; // Approximate retrograde motion
+        return {
+            longitude: northNode < 0 ? northNode + 360 : northNode,
             latitude: 0,
             distance: 1
         };
@@ -1012,19 +1129,70 @@ class AntikytherAstrolabe {
             }
         });
 
-        // Add Ascendant (Rising Sign) with special styling
-        if (positions['Ascendant']) {
-            const pos = positions['Ascendant'];
-            const signIndex = Math.floor(pos.longitude / 30);
-            const degrees = Math.floor(pos.longitude % 30);
-            const minutes = Math.floor(((pos.longitude % 30) - degrees) * 60);
+        // Add major astrological points with special styling
+        const astroPoints = [
+            { name: 'Ascendant', color: '#f4e97c', description: 'Rising Sign' },
+            { name: 'Midheaven', color: '#f4e97c', description: 'MC' },
+            { name: 'Descendant', color: '#e6c767', description: 'Setting Sign' },
+            { name: 'IC', color: '#e6c767', description: 'Nadir' }
+        ];
 
-            html += `<tr style="border-top: 1px solid #b8860b;">
-                <td style="padding: 2px 4px; font-weight: bold; color: #f4e97c;">Ascendant</td>
-                <td style="padding: 2px 4px; color: #f4e97c;">${this.zodiacSigns[signIndex]}</td>
-                <td style="padding: 2px 4px; text-align: right; font-family: monospace; color: #f4e97c;">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
-            </tr>`;
-        }
+        const nodePoints = [
+            { name: 'North Node', color: '#c9a96e', description: 'True Node ☊' },
+            { name: 'South Node', color: '#c9a96e', description: 'South Node ☋' }
+        ];
+
+        const specialPoints = [
+            { name: 'Part of Fortune', color: '#b8860b', description: 'Part ⊕ Fortune' }
+        ];
+
+        // Display Angular Houses (most important)
+        astroPoints.forEach(point => {
+            if (positions[point.name]) {
+                const pos = positions[point.name];
+                const signIndex = Math.floor(pos.longitude / 30);
+                const degrees = Math.floor(pos.longitude % 30);
+                const minutes = Math.floor(((pos.longitude % 30) - degrees) * 60);
+
+                html += `<tr style="border-top: 1px solid #b8860b;">
+                    <td style="padding: 2px 4px; font-weight: bold; color: ${point.color};">${point.name}</td>
+                    <td style="padding: 2px 4px; color: ${point.color};">${this.zodiacSigns[signIndex]}</td>
+                    <td style="padding: 2px 4px; text-align: right; font-family: monospace; color: ${point.color};">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
+                </tr>`;
+            }
+        });
+
+        // Display Lunar Nodes
+        nodePoints.forEach(point => {
+            if (positions[point.name]) {
+                const pos = positions[point.name];
+                const signIndex = Math.floor(pos.longitude / 30);
+                const degrees = Math.floor(pos.longitude % 30);
+                const minutes = Math.floor(((pos.longitude % 30) - degrees) * 60);
+
+                html += `<tr>
+                    <td style="padding: 2px 4px; font-weight: bold; color: ${point.color};">${point.name}</td>
+                    <td style="padding: 2px 4px; color: ${point.color};">${this.zodiacSigns[signIndex]}</td>
+                    <td style="padding: 2px 4px; text-align: right; font-family: monospace; color: ${point.color};">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
+                </tr>`;
+            }
+        });
+
+        // Display Special Points
+        specialPoints.forEach(point => {
+            if (positions[point.name]) {
+                const pos = positions[point.name];
+                const signIndex = Math.floor(pos.longitude / 30);
+                const degrees = Math.floor(pos.longitude % 30);
+                const minutes = Math.floor(((pos.longitude % 30) - degrees) * 60);
+
+                html += `<tr>
+                    <td style="padding: 2px 4px; font-weight: bold; color: ${point.color};">${point.name}</td>
+                    <td style="padding: 2px 4px; color: ${point.color};">${this.zodiacSigns[signIndex]}</td>
+                    <td style="padding: 2px 4px; text-align: right; font-family: monospace; color: ${point.color};">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
+                </tr>`;
+            }
+        });
 
         html += '</tbody></table>';
         infoDiv.innerHTML = html;
