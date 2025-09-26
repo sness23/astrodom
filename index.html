@@ -248,16 +248,32 @@
         <span id="speedDisplay">1x</span>
     </div>
 
-    <div class="info-panel">
+    <!-- Planetary Positions Panel -->
+    <div id="planetsPanel" class="info-panel" style="display: none;">
         <div class="title">Planetary Positions</div>
         <div id="planetaryInfo"></div>
-        <div style="margin-top: 15px; border-top: 1px solid #b8860b; padding-top: 10px;">
-            <div class="title" style="font-size: 14px; margin-bottom: 8px;">Active Aspects</div>
-            <div id="aspectsInfo"></div>
-        </div>
+    </div>
+
+    <!-- Astrological Points Panel -->
+    <div id="astroPanel" class="info-panel" style="display: none;">
+        <div class="title">Astrological Points</div>
+        <div id="astroPointsInfo"></div>
+    </div>
+
+    <!-- Active Aspects Panel -->
+    <div id="aspectsPanel" class="info-panel">
+        <div class="title">Active Aspects</div>
+        <div id="aspectsInfo"></div>
         <div style="margin-top: 15px;">
             <div id="currentDate"></div>
         </div>
+    </div>
+
+    <!-- Panel Toggle Controls -->
+    <div style="position: absolute; bottom: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 5px;">
+        <button id="planetsToggle" style="background: rgba(0, 0, 0, 0.8); border: 1px solid #b8860b; color: #d4af37; padding: 6px 12px; border-radius: 5px; font-size: 11px; cursor: pointer;">🌟 Show Planets</button>
+        <button id="astroToggle" style="background: rgba(0, 0, 0, 0.8); border: 1px solid #b8860b; color: #d4af37; padding: 6px 12px; border-radius: 5px; font-size: 11px; cursor: pointer;">🏛️ Show Houses</button>
+        <button id="aspectsToggle" style="background: rgba(0, 0, 0, 0.8); border: 1px solid #b8860b; color: #d4af37; padding: 6px 12px; border-radius: 5px; font-size: 11px; cursor: pointer;">📐 Hide Aspects</button>
     </div>
 
     <script src="https://cdn.babylonjs.com/babylon.js"></script>

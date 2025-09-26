@@ -117,6 +117,9 @@ class AntikytherAstrolabe {
 
         this.showConstellations = true;
         this.constellationMeshes = [];
+        this.showPlanetsPanel = false;
+        this.showAstroPanel = false;
+        this.showAspectsPanel = true;
 
         // Aspect interpretations
         this.aspectInterpretations = {
@@ -890,6 +893,36 @@ class AntikytherAstrolabe {
         });
     }
 
+    togglePlanetsPanel() {
+        this.showPlanetsPanel = !this.showPlanetsPanel;
+
+        const planetsPanel = document.getElementById('planetsPanel');
+        planetsPanel.style.display = this.showPlanetsPanel ? 'block' : 'none';
+
+        const planetsButton = document.getElementById('planetsToggle');
+        planetsButton.textContent = this.showPlanetsPanel ? '🌟 Hide Planets' : '🌟 Show Planets';
+    }
+
+    toggleAstroPanel() {
+        this.showAstroPanel = !this.showAstroPanel;
+
+        const astroPanel = document.getElementById('astroPanel');
+        astroPanel.style.display = this.showAstroPanel ? 'block' : 'none';
+
+        const astroButton = document.getElementById('astroToggle');
+        astroButton.textContent = this.showAstroPanel ? '🏛️ Hide Houses' : '🏛️ Show Houses';
+    }
+
+    toggleAspectsPanel() {
+        this.showAspectsPanel = !this.showAspectsPanel;
+
+        const aspectsPanel = document.getElementById('aspectsPanel');
+        aspectsPanel.style.display = this.showAspectsPanel ? 'block' : 'none';
+
+        const aspectsButton = document.getElementById('aspectsToggle');
+        aspectsButton.textContent = this.showAspectsPanel ? '📐 Hide Aspects' : '📐 Show Aspects';
+    }
+
     createConstellations() {
         if (!this.showConstellations) return;
 
@@ -1099,10 +1132,22 @@ class AntikytherAstrolabe {
     }
 
     updateInfoPanel(date, positions) {
-        const infoDiv = document.getElementById('planetaryInfo');
+        // Update date display
         const dateDiv = document.getElementById('currentDate');
-
         dateDiv.textContent = date.toLocaleString();
+
+        // Update Planetary Positions Panel
+        this.updatePlanetsPanel(positions);
+
+        // Update Astrological Points Panel
+        this.updateAstroPointsPanel(positions);
+
+        // Update aspects information
+        this.updateAspectsInfo(positions);
+    }
+
+    updatePlanetsPanel(positions) {
+        const planetsDiv = document.getElementById('planetaryInfo');
 
         let html = '<table style="width: 100%; border-collapse: collapse;">';
         html += '<thead><tr style="border-bottom: 1px solid #b8860b;">';
@@ -1111,7 +1156,6 @@ class AntikytherAstrolabe {
         html += '<th style="text-align: right; padding: 4px; color: #d4af37;">Position</th>';
         html += '</tr></thead><tbody>';
 
-        // Display planets first, then Ascendant
         const planetNames = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
 
         planetNames.forEach(planet => {
@@ -1129,57 +1173,31 @@ class AntikytherAstrolabe {
             }
         });
 
-        // Add major astrological points with special styling
+        html += '</tbody></table>';
+        planetsDiv.innerHTML = html;
+    }
+
+    updateAstroPointsPanel(positions) {
+        const astroDiv = document.getElementById('astroPointsInfo');
+
+        let html = '<table style="width: 100%; border-collapse: collapse;">';
+        html += '<thead><tr style="border-bottom: 1px solid #b8860b;">';
+        html += '<th style="text-align: left; padding: 4px; color: #d4af37;">Point</th>';
+        html += '<th style="text-align: left; padding: 4px; color: #d4af37;">Sign</th>';
+        html += '<th style="text-align: right; padding: 4px; color: #d4af37;">Position</th>';
+        html += '</tr></thead><tbody>';
+
         const astroPoints = [
-            { name: 'Ascendant', color: '#f4e97c', description: 'Rising Sign' },
-            { name: 'Midheaven', color: '#f4e97c', description: 'MC' },
-            { name: 'Descendant', color: '#e6c767', description: 'Setting Sign' },
-            { name: 'IC', color: '#e6c767', description: 'Nadir' }
+            { name: 'Ascendant', color: '#f4e97c' },
+            { name: 'Midheaven', color: '#f4e97c' },
+            { name: 'Descendant', color: '#e6c767' },
+            { name: 'IC', color: '#e6c767' },
+            { name: 'North Node', color: '#c9a96e' },
+            { name: 'South Node', color: '#c9a96e' },
+            { name: 'Part of Fortune', color: '#b8860b' }
         ];
 
-        const nodePoints = [
-            { name: 'North Node', color: '#c9a96e', description: 'True Node ☊' },
-            { name: 'South Node', color: '#c9a96e', description: 'South Node ☋' }
-        ];
-
-        const specialPoints = [
-            { name: 'Part of Fortune', color: '#b8860b', description: 'Part ⊕ Fortune' }
-        ];
-
-        // Display Angular Houses (most important)
         astroPoints.forEach(point => {
-            if (positions[point.name]) {
-                const pos = positions[point.name];
-                const signIndex = Math.floor(pos.longitude / 30);
-                const degrees = Math.floor(pos.longitude % 30);
-                const minutes = Math.floor(((pos.longitude % 30) - degrees) * 60);
-
-                html += `<tr style="border-top: 1px solid #b8860b;">
-                    <td style="padding: 2px 4px; font-weight: bold; color: ${point.color};">${point.name}</td>
-                    <td style="padding: 2px 4px; color: ${point.color};">${this.zodiacSigns[signIndex]}</td>
-                    <td style="padding: 2px 4px; text-align: right; font-family: monospace; color: ${point.color};">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
-                </tr>`;
-            }
-        });
-
-        // Display Lunar Nodes
-        nodePoints.forEach(point => {
-            if (positions[point.name]) {
-                const pos = positions[point.name];
-                const signIndex = Math.floor(pos.longitude / 30);
-                const degrees = Math.floor(pos.longitude % 30);
-                const minutes = Math.floor(((pos.longitude % 30) - degrees) * 60);
-
-                html += `<tr>
-                    <td style="padding: 2px 4px; font-weight: bold; color: ${point.color};">${point.name}</td>
-                    <td style="padding: 2px 4px; color: ${point.color};">${this.zodiacSigns[signIndex]}</td>
-                    <td style="padding: 2px 4px; text-align: right; font-family: monospace; color: ${point.color};">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
-                </tr>`;
-            }
-        });
-
-        // Display Special Points
-        specialPoints.forEach(point => {
             if (positions[point.name]) {
                 const pos = positions[point.name];
                 const signIndex = Math.floor(pos.longitude / 30);
@@ -1195,10 +1213,7 @@ class AntikytherAstrolabe {
         });
 
         html += '</tbody></table>';
-        infoDiv.innerHTML = html;
-
-        // Update aspects information
-        this.updateAspectsInfo(positions);
+        astroDiv.innerHTML = html;
     }
 
     updateAspectsInfo(positions) {
@@ -1314,6 +1329,11 @@ class AntikytherAstrolabe {
         // Constellations toggle
         const constellationsToggle = document.getElementById('constellationsToggle');
 
+        // Panel toggles
+        const planetsToggle = document.getElementById('planetsToggle');
+        const astroToggle = document.getElementById('astroToggle');
+        const aspectsToggle = document.getElementById('aspectsToggle');
+
         // Control elements
         const resetButton = document.getElementById('resetToNow');
         const playPauseButton = document.getElementById('playPause');
@@ -1368,6 +1388,19 @@ class AntikytherAstrolabe {
         // Constellations toggle
         constellationsToggle.addEventListener('click', () => {
             this.toggleConstellations();
+        });
+
+        // Panel toggles
+        planetsToggle.addEventListener('click', () => {
+            this.togglePlanetsPanel();
+        });
+
+        astroToggle.addEventListener('click', () => {
+            this.toggleAstroPanel();
+        });
+
+        aspectsToggle.addEventListener('click', () => {
+            this.toggleAspectsPanel();
         });
 
         // Time controls
