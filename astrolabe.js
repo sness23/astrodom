@@ -77,6 +77,44 @@ class AntikytherAstrolabe {
             ]
         };
 
+        // Additional non-zodiac constellations for the right side
+        this.extraConstellations = {
+            'Orion': {
+                angle: 90, // Right side
+                pattern: [
+                    {x: -0.3, y: 1.2}, {x: 0.3, y: 1.2}, {x: 0.8, y: 0.8}, // Belt area
+                    {x: -0.2, y: 0.6}, {x: 0, y: 0}, {x: 0.2, y: 0.6}, // Belt stars
+                    {x: -0.8, y: -0.4}, {x: 0.8, y: -0.4}, {x: -0.5, y: -1.0}, {x: 0.5, y: -1.0} // Lower stars
+                ]
+            },
+            'Cassiopeia': {
+                angle: 45, // Upper right
+                pattern: [
+                    {x: -1.0, y: 0.8}, {x: -0.3, y: 1.2}, {x: 0, y: 0.6}, {x: 0.3, y: 1.2}, {x: 1.0, y: 0.8}
+                ]
+            },
+            'Ursa Major': {
+                angle: 70, // Right side upper
+                pattern: [
+                    {x: -1.2, y: 0.4}, {x: -0.8, y: 0.6}, {x: -0.4, y: 0.8}, {x: 0, y: 0.6}, // Big dipper bowl
+                    {x: 0.4, y: 0.2}, {x: 0.8, y: -0.2}, {x: 1.2, y: -0.6} // Handle
+                ]
+            },
+            'Andromeda': {
+                angle: 110, // Lower right
+                pattern: [
+                    {x: -0.8, y: 0.6}, {x: -0.3, y: 0.8}, {x: 0, y: 0}, {x: 0.4, y: -0.4}, {x: 0.8, y: -0.8}
+                ]
+            },
+            'Perseus': {
+                angle: 130, // Lower right
+                pattern: [
+                    {x: -0.6, y: 1.0}, {x: -0.2, y: 0.6}, {x: 0, y: 0}, {x: 0.3, y: -0.5},
+                    {x: 0.6, y: -0.8}, {x: -0.4, y: -0.3}
+                ]
+            }
+        };
+
         this.showConstellations = false;
         this.constellationMeshes = [];
 
@@ -663,8 +701,8 @@ class AntikytherAstrolabe {
         this.constellationMeshes.forEach(mesh => mesh.dispose());
         this.constellationMeshes = [];
 
-        // Only show constellations that are "behind" the display (180-360 degrees)
-        for (let i = 6; i < 12; i++) { // Back half of zodiac
+        // Only show constellations that are "behind" the display (150-360 degrees)
+        for (let i = 5; i < 12; i++) { // Back half of zodiac including Virgo
             const angle = (i * 30) * Math.PI / 180;
             const signName = this.zodiacSigns[i];
             const pattern = this.constellationPatterns[signName];
@@ -706,6 +744,48 @@ class AntikytherAstrolabe {
                 this.createConstellationLines(signName, pattern, angle);
             }
         }
+
+        // Add extra constellations to fill empty areas
+        Object.keys(this.extraConstellations).forEach(constellationName => {
+            const constellation = this.extraConstellations[constellationName];
+            const angle = constellation.angle * Math.PI / 180;
+            const pattern = constellation.pattern;
+
+            // Create stars for this constellation
+            pattern.forEach((star, starIndex) => {
+                // Create star
+                const starMesh = BABYLON.MeshBuilder.CreateSphere(`${constellationName}_star_${starIndex}`, {
+                    diameter: 0.12 // Slightly smaller for non-zodiac
+                }, this.scene);
+
+                // Position star behind the astrolabe
+                const baseRadius = 14; // Even further back for variety
+                const starRadius = baseRadius + (star.x * 1.5); // Less depth variation
+                const starAngle = angle + (star.x * 0.2); // Less spreading
+
+                starMesh.position.x = Math.cos(starAngle) * starRadius;
+                starMesh.position.z = Math.sin(starAngle) * starRadius;
+                starMesh.position.y = star.y * 2.5; // Slightly less height variation
+
+                // Create star material with slight color variation
+                const starMaterial = new BABYLON.StandardMaterial(`${constellationName}_star_mat_${starIndex}`, this.scene);
+                starMaterial.emissiveColor = new BABYLON.Color3(0.8, 0.9, 1); // Slightly more blue
+                starMaterial.disableLighting = true;
+                starMesh.material = starMaterial;
+
+                // Add glow
+                const glowLayer = new BABYLON.GlowLayer(`${constellationName}_star_glow_${starIndex}`, this.scene);
+                glowLayer.addIncludedOnlyMesh(starMesh);
+                glowLayer.intensity = 0.25;
+
+                this.constellationMeshes.push(starMesh);
+            });
+
+            // Create constellation lines
+            if (pattern.length > 1) {
+                this.createExtraConstellationLines(constellationName, pattern, angle);
+            }
+        });
     }
 
     createConstellationLines(signName, pattern, baseAngle) {
@@ -746,6 +826,62 @@ class AntikytherAstrolabe {
             twinLine.color = new BABYLON.Color3(0.6, 0.6, 0.8);
             twinLine.alpha = 0.4;
             this.constellationMeshes.push(twinLine);
+        }
+    }
+
+    createExtraConstellationLines(constellationName, pattern, baseAngle) {
+        const baseRadius = 14;
+        const points = [];
+
+        // Create points for the constellation lines
+        pattern.forEach(star => {
+            const starRadius = baseRadius + (star.x * 1.5);
+            const starAngle = baseAngle + (star.x * 0.2);
+
+            points.push(new BABYLON.Vector3(
+                Math.cos(starAngle) * starRadius,
+                star.y * 2.5,
+                Math.sin(starAngle) * starRadius
+            ));
+        });
+
+        // Create lines connecting the stars in sequence
+        for (let i = 0; i < points.length - 1; i++) {
+            const linePoints = [points[i], points[i + 1]];
+            const line = BABYLON.MeshBuilder.CreateLines(`${constellationName}_line_${i}`, {
+                points: linePoints
+            }, this.scene);
+
+            line.color = new BABYLON.Color3(0.5, 0.6, 0.9); // Slightly more blue
+            line.alpha = 0.3;
+
+            this.constellationMeshes.push(line);
+        }
+
+        // Special constellation-specific connections
+        if (constellationName === 'Orion' && points.length >= 6) {
+            // Connect belt stars (indices 3, 4, 5)
+            for (let i = 3; i < 5; i++) {
+                const beltLine = BABYLON.MeshBuilder.CreateLines(`${constellationName}_belt_${i}`, {
+                    points: [points[i], points[i + 1]]
+                }, this.scene);
+                beltLine.color = new BABYLON.Color3(0.7, 0.7, 1);
+                beltLine.alpha = 0.5;
+                this.constellationMeshes.push(beltLine);
+            }
+        }
+
+        if (constellationName === 'Ursa Major' && points.length >= 7) {
+            // Connect the Big Dipper properly
+            const dipperConnections = [[0,1], [1,2], [2,3], [3,4], [4,5], [5,6]];
+            dipperConnections.forEach((connection, idx) => {
+                const dipperLine = BABYLON.MeshBuilder.CreateLines(`${constellationName}_dipper_${idx}`, {
+                    points: [points[connection[0]], points[connection[1]]]
+                }, this.scene);
+                dipperLine.color = new BABYLON.Color3(0.8, 0.8, 1);
+                dipperLine.alpha = 0.4;
+                this.constellationMeshes.push(dipperLine);
+            });
         }
     }
 
