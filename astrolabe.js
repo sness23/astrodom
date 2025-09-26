@@ -419,6 +419,21 @@ class AntikytherAstrolabe {
                         positions[bodyName] = this.getFallbackPosition(bodyName, date);
                     }
                 });
+
+                // Calculate Ascendant (Rising Sign)
+                try {
+                    const localSiderealTime = this.calculateLocalSiderealTime(date, this.birthCoords.lon);
+                    const ascendant = this.calculateAscendant(localSiderealTime, this.birthCoords.lat);
+                    positions['Ascendant'] = {
+                        longitude: ascendant,
+                        latitude: 0,
+                        distance: 1
+                    };
+                } catch (e) {
+                    console.warn('Could not calculate Ascendant:', e);
+                    positions['Ascendant'] = this.getFallbackAscendant(date);
+                }
+
             } catch (e) {
                 console.error('Error with Astronomy library:', e);
                 return this.getFallbackPositions(date);
@@ -441,6 +456,9 @@ class AntikytherAstrolabe {
         planetNames.forEach((planet, index) => {
             positions[planet] = this.getFallbackPosition(planet, date, daysSinceBirth);
         });
+
+        // Add fallback Ascendant
+        positions['Ascendant'] = this.getFallbackAscendant(date);
 
         return positions;
     }
@@ -486,6 +504,55 @@ class AntikytherAstrolabe {
 
         return {
             longitude: longitude,
+            latitude: 0,
+            distance: 1
+        };
+    }
+
+    calculateLocalSiderealTime(date, longitude) {
+        // Calculate Greenwich Mean Sidereal Time
+        const j2000 = new Date('2000-01-01T12:00:00Z');
+        const daysSinceJ2000 = (date.getTime() - j2000.getTime()) / (1000 * 60 * 60 * 24);
+
+        // GMST at 0h UT
+        let gmst = 18.697374558 + 24.06570982441908 * daysSinceJ2000;
+
+        // Add hours/minutes/seconds of the day
+        const hours = date.getUTCHours();
+        const minutes = date.getUTCMinutes();
+        const seconds = date.getUTCSeconds();
+        const timeOfDay = hours + minutes/60 + seconds/3600;
+
+        gmst += timeOfDay * 1.00273790935;
+
+        // Convert to Local Sidereal Time
+        const lst = gmst + longitude / 15;
+
+        // Normalize to 0-24 hours
+        return ((lst % 24) + 24) % 24;
+    }
+
+    calculateAscendant(localSiderealTime, latitude) {
+        // Convert to radians
+        const lstRad = localSiderealTime * 15 * Math.PI / 180;
+        const latRad = latitude * Math.PI / 180;
+
+        // Calculate Ascendant using spherical trigonometry
+        const ascendant = Math.atan2(Math.cos(lstRad), -(Math.sin(lstRad) * Math.cos(latRad)));
+
+        // Convert to degrees and normalize
+        let ascendantDegrees = ascendant * 180 / Math.PI;
+        if (ascendantDegrees < 0) ascendantDegrees += 360;
+
+        return ascendantDegrees;
+    }
+
+    getFallbackAscendant(date) {
+        // Simple fallback based on time of day
+        const hours = date.getHours();
+        const ascendant = (hours * 15) % 360; // Rough approximation
+        return {
+            longitude: ascendant,
             latitude: 0,
             distance: 1
         };
@@ -927,18 +994,37 @@ class AntikytherAstrolabe {
         html += '<th style="text-align: right; padding: 4px; color: #d4af37;">Position</th>';
         html += '</tr></thead><tbody>';
 
-        Object.keys(positions).forEach(planet => {
-            const pos = positions[planet];
+        // Display planets first, then Ascendant
+        const planetNames = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
+
+        planetNames.forEach(planet => {
+            if (positions[planet]) {
+                const pos = positions[planet];
+                const signIndex = Math.floor(pos.longitude / 30);
+                const degrees = Math.floor(pos.longitude % 30);
+                const minutes = Math.floor(((pos.longitude % 30) - degrees) * 60);
+
+                html += `<tr>
+                    <td style="padding: 2px 4px; font-weight: bold;">${planet}</td>
+                    <td style="padding: 2px 4px;">${this.zodiacSigns[signIndex]}</td>
+                    <td style="padding: 2px 4px; text-align: right; font-family: monospace;">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
+                </tr>`;
+            }
+        });
+
+        // Add Ascendant (Rising Sign) with special styling
+        if (positions['Ascendant']) {
+            const pos = positions['Ascendant'];
             const signIndex = Math.floor(pos.longitude / 30);
             const degrees = Math.floor(pos.longitude % 30);
             const minutes = Math.floor(((pos.longitude % 30) - degrees) * 60);
 
-            html += `<tr>
-                <td style="padding: 2px 4px; font-weight: bold;">${planet}</td>
-                <td style="padding: 2px 4px;">${this.zodiacSigns[signIndex]}</td>
-                <td style="padding: 2px 4px; text-align: right; font-family: monospace;">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
+            html += `<tr style="border-top: 1px solid #b8860b;">
+                <td style="padding: 2px 4px; font-weight: bold; color: #f4e97c;">Ascendant</td>
+                <td style="padding: 2px 4px; color: #f4e97c;">${this.zodiacSigns[signIndex]}</td>
+                <td style="padding: 2px 4px; text-align: right; font-family: monospace; color: #f4e97c;">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
             </tr>`;
-        });
+        }
 
         html += '</tbody></table>';
         infoDiv.innerHTML = html;
