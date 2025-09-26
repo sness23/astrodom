@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antikythera Astrolabe - 3D Natal Chart Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle, #1a1a1a, #000000);
+            font-family: 'Times New Roman', serif;
+            color: #d4af37;
+            overflow: hidden;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100vh;
+            touch-action: none;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #b8860b;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #d4af37;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+        }
+
+        input, button, select {
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid #b8860b;
+            color: #d4af37;
+            padding: 8px;
+            border-radius: 5px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        button {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: rgba(212, 175, 55, 0.2);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .time-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        #speedSlider {
+            width: 150px;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #b8860b;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+            max-width: 300px;
+        }
+
+        .planet-info {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+
+    <div class="controls">
+        <div class="title">⚡ Antikythera Astrolabe ⚡</div>
+
+        <div class="control-group">
+            <label>Birth Date:</label>
+            <input type="date" id="birthDate" value="1972-01-25">
+        </div>
+
+        <div class="control-group">
+            <label>Birth Time:</label>
+            <input type="time" id="birthTime" value="07:32">
+        </div>
+
+        <div class="control-group">
+            <label>Latitude:</label>
+            <input type="number" id="latitude" value="53.5461" step="0.0001" placeholder="Edmonton: 53.5461">
+        </div>
+
+        <div class="control-group">
+            <label>Longitude:</label>
+            <input type="number" id="longitude" value="-113.4938" step="0.0001" placeholder="Edmonton: -113.4938">
+        </div>
+
+        <div class="control-group">
+            <button id="calculateChart">Calculate Natal Chart</button>
+            <button id="resetToNow">Jump to Present</button>
+        </div>
+
+        <div class="time-controls">
+            <button id="playPause">▶ Play</button>
+            <label>Speed:</label>
+            <input type="range" id="speedSlider" min="0.1" max="10" value="1" step="0.1">
+            <span id="speedDisplay">1x</span>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <div class="title">Planetary Positions</div>
+        <div id="planetaryInfo"></div>
+        <div style="margin-top: 15px;">
+            <div id="currentDate"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.js"></script>
+    <script src="astrolabe.js"></script>
+</body>
+</html>
