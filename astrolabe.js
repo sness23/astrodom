@@ -118,6 +118,15 @@ class AntikytherAstrolabe {
         this.showConstellations = true;
         this.constellationMeshes = [];
 
+        // Aspect interpretations
+        this.aspectInterpretations = {
+            0: { name: 'Conjunction', meaning: 'Energies merge and amplify each other' },
+            60: { name: 'Sextile', meaning: 'Harmonious opportunities for growth' },
+            90: { name: 'Square', meaning: 'Dynamic tension creating action' },
+            120: { name: 'Trine', meaning: 'Natural flow and ease between energies' },
+            180: { name: 'Opposition', meaning: 'Balancing opposing forces' }
+        };
+
         this.init();
     }
 
@@ -933,6 +942,95 @@ class AntikytherAstrolabe {
 
         html += '</tbody></table>';
         infoDiv.innerHTML = html;
+
+        // Update aspects information
+        this.updateAspectsInfo(positions);
+    }
+
+    updateAspectsInfo(positions) {
+        const aspectsDiv = document.getElementById('aspectsInfo');
+        const activeAspects = [];
+
+        const planetNames = Object.keys(positions);
+        const aspectAngles = [0, 60, 90, 120, 180];
+
+        // Find all active aspects
+        for (let i = 0; i < planetNames.length; i++) {
+            for (let j = i + 1; j < planetNames.length; j++) {
+                const planet1 = planetNames[i];
+                const planet2 = planetNames[j];
+                const angle1 = positions[planet1].longitude;
+                const angle2 = positions[planet2].longitude;
+
+                let angleDiff = Math.abs(angle1 - angle2);
+                if (angleDiff > 180) angleDiff = 360 - angleDiff;
+
+                // Check for aspects (within 5 degrees orb)
+                for (let aspectAngle of aspectAngles) {
+                    if (Math.abs(angleDiff - aspectAngle) < 5) {
+                        const orb = Math.abs(angleDiff - aspectAngle).toFixed(1);
+                        activeAspects.push({
+                            planet1: planet1,
+                            planet2: planet2,
+                            aspectAngle: aspectAngle,
+                            orb: orb,
+                            exactness: 5 - Math.abs(angleDiff - aspectAngle) // Higher = more exact
+                        });
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Sort by exactness (most exact first)
+        activeAspects.sort((a, b) => b.exactness - a.exactness);
+
+        // Create HTML for aspects table
+        let html = '';
+        if (activeAspects.length === 0) {
+            html = '<div style="color: #999; font-style: italic; font-size: 11px;">No major aspects forming</div>';
+        } else {
+            html = '<table style="width: 100%; border-collapse: collapse; font-size: 11px;">';
+            html += '<thead><tr style="border-bottom: 1px solid #b8860b;">';
+            html += '<th style="text-align: left; padding: 3px; color: #d4af37; width: 28%;">Planet 1</th>';
+            html += '<th style="text-align: center; padding: 3px; color: #d4af37; width: 44%;">Aspect</th>';
+            html += '<th style="text-align: right; padding: 3px; color: #d4af37; width: 28%;">Planet 2</th>';
+            html += '</tr></thead><tbody>';
+
+            // Limit to top 5 most exact aspects
+            activeAspects.slice(0, 5).forEach(aspect => {
+                const interpretation = this.aspectInterpretations[aspect.aspectAngle];
+                const color = this.getAspectColor(aspect.aspectAngle);
+
+                html += `<tr>
+                    <td style="padding: 2px 3px; font-weight: bold;">${aspect.planet1}</td>
+                    <td style="padding: 2px 3px; text-align: center;">
+                        <div style="display: flex; align-items: center; justify-content: center;">
+                            <div style="width: 6px; height: 6px; background-color: ${color}; margin-right: 4px; border-radius: 50%;"></div>
+                            <span style="font-weight: bold;">${interpretation.name}</span>
+                            <span style="color: #999; font-size: 9px; margin-left: 3px;">(${aspect.orb}°)</span>
+                        </div>
+                        <div style="color: #ccc; font-size: 9px; font-style: italic; margin-top: 1px;">${interpretation.meaning}</div>
+                    </td>
+                    <td style="padding: 2px 3px; font-weight: bold; text-align: right;">${aspect.planet2}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+        }
+
+        aspectsDiv.innerHTML = html;
+    }
+
+    getAspectColor(aspectAngle) {
+        switch(aspectAngle) {
+            case 0: return '#ffff00'; // Conjunction - Yellow
+            case 60: return '#00ff00'; // Sextile - Green
+            case 90: return '#ff0000'; // Square - Red
+            case 120: return '#0000ff'; // Trine - Blue
+            case 180: return '#ff00ff'; // Opposition - Magenta
+            default: return '#ffffff';
+        }
     }
 
     calculateNatalChart() {
