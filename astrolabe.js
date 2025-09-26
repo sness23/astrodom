@@ -503,6 +503,11 @@ class AntikytherAstrolabe {
         const useDefaultsButton = document.getElementById('useDefaults');
         const reopenModalButton = document.getElementById('reopenModal');
 
+        // Help modal elements
+        const helpModal = document.getElementById('helpModal');
+        const helpButton = document.getElementById('helpButton');
+        const closeHelpButton = document.getElementById('closeHelp');
+
         // Control elements
         const resetButton = document.getElementById('resetToNow');
         const playPauseButton = document.getElementById('playPause');
@@ -533,6 +538,22 @@ class AntikytherAstrolabe {
             this.showModal();
         });
 
+        // Help modal controls
+        helpButton.addEventListener('click', () => {
+            this.showHelpModal();
+        });
+
+        closeHelpButton.addEventListener('click', () => {
+            this.hideHelpModal();
+        });
+
+        // Close help modal when clicking outside
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                this.hideHelpModal();
+            }
+        });
+
         // Time controls
         resetButton.addEventListener('click', () => {
             this.currentDate = new Date();
@@ -561,6 +582,16 @@ class AntikytherAstrolabe {
     hideModal() {
         const modal = document.getElementById('birthDataModal');
         modal.classList.add('hidden');
+    }
+
+    showHelpModal() {
+        const helpModal = document.getElementById('helpModal');
+        helpModal.classList.remove('hidden');
+    }
+
+    hideHelpModal() {
+        const helpModal = document.getElementById('helpModal');
+        helpModal.classList.add('hidden');
     }
 
     startAnimation() {
