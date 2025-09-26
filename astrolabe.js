@@ -535,12 +535,12 @@ class AntikytherAstrolabe {
             const angle = (i * 30) * Math.PI / 180;
             const signName = this.zodiacSigns[i];
 
-            // Create a plane for the text - much larger
-            const plane = BABYLON.MeshBuilder.CreatePlane(`${signName}Label`, {size: 2}, this.scene);
+            // Create a plane for the text - double the size
+            const plane = BABYLON.MeshBuilder.CreatePlane(`${signName}Label`, {size: 4}, this.scene);
 
-            // Position the label on the outer ring
-            plane.position.x = Math.cos(angle) * 7.5;
-            plane.position.z = Math.sin(angle) * 7.5;
+            // Position the label closer to center
+            plane.position.x = Math.cos(angle) * 6;
+            plane.position.z = Math.sin(angle) * 6;
             plane.position.y = 0.4;
 
             // Make it face the camera properly with manual rotation
