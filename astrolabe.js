@@ -35,6 +35,51 @@ class AntikytherAstrolabe {
             'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
         ];
 
+        // Constellation star patterns (simplified, relative positions)
+        this.constellationPatterns = {
+            'Aries': [
+                {x: 0, y: 0}, {x: 0.8, y: 0.3}, {x: 1.2, y: -0.2}
+            ],
+            'Taurus': [
+                {x: -0.5, y: 0.8}, {x: 0, y: 0}, {x: 0.7, y: -0.3}, {x: 1.0, y: 0.5}, {x: -0.8, y: -0.2}
+            ],
+            'Gemini': [
+                {x: -0.6, y: 0.8}, {x: -0.3, y: 0.3}, {x: 0, y: 0}, {x: 0.3, y: 0.3}, {x: 0.6, y: 0.8},
+                {x: -0.6, y: -0.8}, {x: -0.3, y: -0.3}, {x: 0.3, y: -0.3}, {x: 0.6, y: -0.8}
+            ],
+            'Cancer': [
+                {x: -0.4, y: 0.6}, {x: 0, y: 0}, {x: 0.4, y: 0.6}, {x: -0.7, y: -0.4}, {x: 0.7, y: -0.4}
+            ],
+            'Leo': [
+                {x: -1.0, y: 0.5}, {x: -0.3, y: 0.8}, {x: 0, y: 0}, {x: 0.5, y: -0.3}, {x: 0.8, y: -0.8}, {x: 0.2, y: -0.6}
+            ],
+            'Virgo': [
+                {x: -0.8, y: 0.6}, {x: -0.4, y: 0.8}, {x: 0, y: 0}, {x: 0.3, y: -0.4}, {x: 0.8, y: -0.2}, {x: 0.6, y: -0.8}
+            ],
+            'Libra': [
+                {x: -0.8, y: 0.4}, {x: -0.3, y: 0.6}, {x: 0, y: 0}, {x: 0.3, y: 0.6}, {x: 0.8, y: 0.4}, {x: 0, y: -0.8}
+            ],
+            'Scorpio': [
+                {x: -0.9, y: 0.3}, {x: -0.6, y: 0.6}, {x: -0.3, y: 0.2}, {x: 0, y: 0}, {x: 0.4, y: -0.3}, {x: 0.7, y: -0.7}, {x: 1.0, y: -0.9}
+            ],
+            'Sagittarius': [
+                {x: -0.8, y: -0.5}, {x: -0.3, y: 0}, {x: 0, y: 0.6}, {x: 0.4, y: 0.3}, {x: 0.8, y: -0.2}, {x: 0.5, y: -0.8}
+            ],
+            'Capricorn': [
+                {x: -0.8, y: 0.3}, {x: -0.4, y: 0.7}, {x: 0, y: 0}, {x: 0.4, y: -0.5}, {x: 0.8, y: -0.8}, {x: 0.6, y: 0.2}
+            ],
+            'Aquarius': [
+                {x: -0.9, y: 0.2}, {x: -0.4, y: 0.8}, {x: 0, y: 0}, {x: 0.4, y: 0.8}, {x: 0.9, y: 0.2}, {x: 0.2, y: -0.6}, {x: -0.2, y: -0.8}
+            ],
+            'Pisces': [
+                {x: -1.0, y: 0.5}, {x: -0.6, y: 0.8}, {x: -0.2, y: 0.3}, {x: 0, y: 0}, {x: 0.2, y: 0.3}, {x: 0.6, y: 0.8}, {x: 1.0, y: 0.5},
+                {x: -0.8, y: -0.6}, {x: 0.8, y: -0.6}
+            ]
+        };
+
+        this.showConstellations = false;
+        this.constellationMeshes = [];
+
         this.init();
     }
 
@@ -611,6 +656,116 @@ class AntikytherAstrolabe {
         });
     }
 
+    createConstellations() {
+        if (!this.showConstellations) return;
+
+        // Clear existing constellations
+        this.constellationMeshes.forEach(mesh => mesh.dispose());
+        this.constellationMeshes = [];
+
+        // Only show constellations that are "behind" the display (180-360 degrees)
+        for (let i = 6; i < 12; i++) { // Back half of zodiac
+            const angle = (i * 30) * Math.PI / 180;
+            const signName = this.zodiacSigns[i];
+            const pattern = this.constellationPatterns[signName];
+
+            if (!pattern) continue;
+
+            // Create stars for this constellation
+            pattern.forEach((star, starIndex) => {
+                // Create star
+                const starMesh = BABYLON.MeshBuilder.CreateSphere(`${signName}_star_${starIndex}`, {
+                    diameter: 0.15
+                }, this.scene);
+
+                // Position star behind the astrolabe
+                const baseRadius = 12; // Much further back
+                const starRadius = baseRadius + (star.x * 2); // Vary depth
+                const starAngle = angle + (star.x * 0.3); // Spread around base angle
+
+                starMesh.position.x = Math.cos(starAngle) * starRadius;
+                starMesh.position.z = Math.sin(starAngle) * starRadius;
+                starMesh.position.y = star.y * 3; // Height variation
+
+                // Create star material
+                const starMaterial = new BABYLON.StandardMaterial(`${signName}_star_mat_${starIndex}`, this.scene);
+                starMaterial.emissiveColor = new BABYLON.Color3(0.9, 0.9, 1);
+                starMaterial.disableLighting = true;
+                starMesh.material = starMaterial;
+
+                // Add glow
+                const glowLayer = new BABYLON.GlowLayer(`${signName}_star_glow_${starIndex}`, this.scene);
+                glowLayer.addIncludedOnlyMesh(starMesh);
+                glowLayer.intensity = 0.3;
+
+                this.constellationMeshes.push(starMesh);
+            });
+
+            // Create constellation lines connecting stars
+            if (pattern.length > 1) {
+                this.createConstellationLines(signName, pattern, angle);
+            }
+        }
+    }
+
+    createConstellationLines(signName, pattern, baseAngle) {
+        const baseRadius = 12;
+        const points = [];
+
+        // Create points for the constellation lines
+        pattern.forEach(star => {
+            const starRadius = baseRadius + (star.x * 2);
+            const starAngle = baseAngle + (star.x * 0.3);
+
+            points.push(new BABYLON.Vector3(
+                Math.cos(starAngle) * starRadius,
+                star.y * 3,
+                Math.sin(starAngle) * starRadius
+            ));
+        });
+
+        // Create lines connecting the stars in sequence
+        for (let i = 0; i < points.length - 1; i++) {
+            const linePoints = [points[i], points[i + 1]];
+            const line = BABYLON.MeshBuilder.CreateLines(`${signName}_line_${i}`, {
+                points: linePoints
+            }, this.scene);
+
+            line.color = new BABYLON.Color3(0.6, 0.6, 0.8);
+            line.alpha = 0.4;
+
+            this.constellationMeshes.push(line);
+        }
+
+        // For some constellations, add additional connecting lines
+        if (signName === 'Gemini' && points.length >= 9) {
+            // Connect the twin figures
+            const twinLine = BABYLON.MeshBuilder.CreateLines(`${signName}_twin_line`, {
+                points: [points[0], points[5]] // Connect top stars of each twin
+            }, this.scene);
+            twinLine.color = new BABYLON.Color3(0.6, 0.6, 0.8);
+            twinLine.alpha = 0.4;
+            this.constellationMeshes.push(twinLine);
+        }
+    }
+
+    toggleConstellations() {
+        this.showConstellations = !this.showConstellations;
+
+        if (this.showConstellations) {
+            this.createConstellations();
+        } else {
+            this.constellationMeshes.forEach(mesh => mesh.dispose());
+            this.constellationMeshes = [];
+        }
+
+        // Update button text
+        const constellationsButton = document.getElementById('constellationsToggle');
+        if (constellationsButton) {
+            constellationsButton.textContent = this.showConstellations ? '⭐ Hide' : '⭐ Show';
+        }
+    }
+
     updateInfoPanel(date, positions) {
         const infoDiv = document.getElementById('planetaryInfo');
         const dateDiv = document.getElementById('currentDate');
@@ -655,6 +810,9 @@ class AntikytherAstrolabe {
 
         // Labels toggle
         const labelsToggle = document.getElementById('labelsToggle');
+
+        // Constellations toggle
+        const constellationsToggle = document.getElementById('constellationsToggle');
 
         // Control elements
         const resetButton = document.getElementById('resetToNow');
@@ -705,6 +863,11 @@ class AntikytherAstrolabe {
         // Labels toggle
         labelsToggle.addEventListener('click', () => {
             this.toggleLabels();
+        });
+
+        // Constellations toggle
+        constellationsToggle.addEventListener('click', () => {
+            this.toggleConstellations();
         });
 
         // Time controls
