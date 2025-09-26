@@ -911,18 +911,27 @@ class AntikytherAstrolabe {
 
         dateDiv.textContent = date.toLocaleString();
 
-        let html = '';
+        let html = '<table style="width: 100%; border-collapse: collapse;">';
+        html += '<thead><tr style="border-bottom: 1px solid #b8860b;">';
+        html += '<th style="text-align: left; padding: 4px; color: #d4af37;">Planet</th>';
+        html += '<th style="text-align: left; padding: 4px; color: #d4af37;">Sign</th>';
+        html += '<th style="text-align: right; padding: 4px; color: #d4af37;">Position</th>';
+        html += '</tr></thead><tbody>';
+
         Object.keys(positions).forEach(planet => {
             const pos = positions[planet];
             const signIndex = Math.floor(pos.longitude / 30);
             const degrees = Math.floor(pos.longitude % 30);
             const minutes = Math.floor(((pos.longitude % 30) - degrees) * 60);
 
-            html += `<div class="planet-info">
-                <strong>${planet}:</strong> ${this.zodiacSigns[signIndex]} ${degrees}°${minutes}'
-            </div>`;
+            html += `<tr>
+                <td style="padding: 2px 4px; font-weight: bold;">${planet}</td>
+                <td style="padding: 2px 4px;">${this.zodiacSigns[signIndex]}</td>
+                <td style="padding: 2px 4px; text-align: right; font-family: monospace;">${degrees}°${minutes.toString().padStart(2, '0')}'</td>
+            </tr>`;
         });
 
+        html += '</tbody></table>';
         infoDiv.innerHTML = html;
     }
 
