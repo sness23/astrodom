@@ -226,7 +226,8 @@
                 <p><strong>⚙️ Settings:</strong> Change birth data and location</p>
                 <p><strong>🏷️ Labels:</strong> Show/hide planet and zodiac sign labels</p>
                 <p><strong>⭐ Constellations:</strong> Show/hide star patterns behind the astrolabe</p>
-                <p><strong>Speed Slider:</strong> Control animation speed (0.1x to 10x)</p>
+                <p><strong>Speed Slider:</strong> Dramatic time control (1x to 1000x minutes per frame)</p>
+                <p><strong>Panel Toggles:</strong> 🌟 Planets, 🏛️ Houses, 📐 Aspects (bottom-right buttons)</p>
             </div>
 
             <div class="modal-buttons">
@@ -236,16 +237,20 @@
     </div>
 
     <!-- Time Controls -->
-    <div class="time-controls">
-        <button id="playPause">▶ Play</button>
-        <button id="resetToNow">🏠 Present</button>
-        <button id="reopenModal">⚙️ Settings</button>
-        <button id="helpButton">❓ Help</button>
-        <button id="labelsToggle">🏷️ Labels</button>
-        <button id="constellationsToggle">⭐ Hide</button>
-        <label>Speed:</label>
-        <input type="range" id="speedSlider" min="0.1" max="10" value="1" step="0.1">
-        <span id="speedDisplay">1x</span>
+    <div class="time-controls" style="flex-direction: column; align-items: center; padding: 20px;">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+            <button id="playPause">▶ Play</button>
+            <button id="resetToNow">🏠 Present</button>
+            <button id="reopenModal">⚙️ Settings</button>
+            <button id="helpButton">❓ Help</button>
+            <button id="labelsToggle">🏷️ Labels</button>
+            <button id="constellationsToggle">⭐ Hide</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
+            <label style="font-size: 14px; font-weight: bold;">Speed:</label>
+            <input type="range" id="speedSlider" min="1" max="1000" value="1" step="1" style="flex: 1; width: 400px; height: 8px; background: linear-gradient(to right, #b8860b, #d4af37); border-radius: 5px;">
+            <span id="speedDisplay" style="min-width: 80px; text-align: center; font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 5px; border: 1px solid #b8860b;">1x</span>
+        </div>
     </div>
 
     <!-- Planetary Positions Panel -->

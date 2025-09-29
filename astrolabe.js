@@ -1220,7 +1220,8 @@ class AntikytherAstrolabe {
         const aspectsDiv = document.getElementById('aspectsInfo');
         const activeAspects = [];
 
-        const planetNames = Object.keys(positions);
+        // Only check aspects between actual planets (including Sun and Moon)
+        const planetNames = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
         const aspectAngles = [0, 60, 90, 120, 180];
 
         // Find all active aspects
@@ -1416,7 +1417,14 @@ class AntikytherAstrolabe {
 
         speedSlider.addEventListener('input', (e) => {
             this.animationSpeed = parseFloat(e.target.value);
-            speedDisplay.textContent = `${this.animationSpeed}x`;
+            // Format display with appropriate precision
+            if (this.animationSpeed < 10) {
+                speedDisplay.textContent = `${this.animationSpeed}x`;
+            } else if (this.animationSpeed < 100) {
+                speedDisplay.textContent = `${this.animationSpeed}x`;
+            } else {
+                speedDisplay.textContent = `${this.animationSpeed}x`;
+            }
         });
 
         // Start animation
@@ -1446,13 +1454,13 @@ class AntikytherAstrolabe {
     startAnimation() {
         const animate = () => {
             if (this.isAnimating) {
-                // Advance time by speed factor (1 hour per frame at 1x speed)
-                this.currentDate.setHours(this.currentDate.getHours() + this.animationSpeed);
+                // Advance time by speed factor (1 minute per frame at 1x speed)
+                this.currentDate.setMinutes(this.currentDate.getMinutes() + this.animationSpeed);
                 this.updatePlanetPositions(this.currentDate);
 
                 // Add subtle rotation to the zodiac wheel
                 if (this.zodiacWheel) {
-                    this.zodiacWheel.rotation.y += 0.001 * this.animationSpeed;
+                    this.zodiacWheel.rotation.y += 0.001 * (this.animationSpeed / 60); // Adjusted for minute-based increment
                 }
             }
 
